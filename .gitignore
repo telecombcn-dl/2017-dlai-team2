@@ -1,3 +1,22 @@
+# new stuff
+dll/
+ExternalTools/
+Firmware/
+Gameboy/
+gamedb/
+N64/
+NES/
+shaders/
+config.ini
+defctrl.json
+*.exe
+Lua/N64/
+Lua/NES
+Lua/Genesis
+Lua/SNES
+Lua/UnitTests
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
