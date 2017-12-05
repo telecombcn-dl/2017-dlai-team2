@@ -1,7 +1,7 @@
 import sys, time, logging, os, argparse
 
 import numpy as np
-from PIL import Image, ImageGrab
+from PIL import Image, ImageGrab, ImageMath, ImageChops
 from socketserver import TCPServer, StreamRequestHandler
 
 import tensorflow as tf
@@ -14,7 +14,7 @@ set_session(tf.Session(config=config))
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-from train import create_model, is_valid_track_code, INPUT_WIDTH, INPUT_HEIGHT, INPUT_CHANNELS
+from train_new_map import extract_map, create_model, is_valid_track_code, INPUT_WIDTH, INPUT_HEIGHT, INPUT_CHANNELS, XMIN, XMAX, YMIN, YMAX, MAP_HEIGHT, MAP_WIDTH, INPUT_CHANNELS_MAP
 
 def prepare_image(im):
     im = im.resize((INPUT_WIDTH, INPUT_HEIGHT))
@@ -46,7 +46,7 @@ class TCPHandler(StreamRequestHandler):
                 im = ImageGrab.grabclipboard()
                 if im != None:
                     # insert extraction here
-                    prediction = model.predict(prepare_image(im), batch_size=1)[0]
+                    prediction = model.predict([prepare_image(im), np.expand_dims(extract_map(im, Image.open("masks/mm_LR.png").convert("RGB")), axis=0)], batch_size=1)[0]
                     self.wfile.write((str(prediction[0]) + "\n").encode('utf-8'))
                     logger.info("Im != null")
                 else:
@@ -57,7 +57,7 @@ class TCPHandler(StreamRequestHandler):
                 logger.info("Predict")
                 im = Image.open(message[8:])
                 logger.info(message)
-                prediction = model.predict(prepare_image(im), batch_size=1)[0]
+                prediction = model.predict([prepare_image(im), np.expand_dims(extract_map(im, Image.open("masks/mm_LR.png").convert("RGB")), axis=0)], batch_size=1)[0]
                 self.wfile.write((str(prediction[0]) + "\n").encode('utf-8'))
 
 if __name__ == "__main__":

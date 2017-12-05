@@ -75,10 +75,11 @@ def extract_map(frame, mask):
     trackMap_arr = np.frombuffer(trackMap.tobytes(), dtype=np.uint8)
     trackMap_arr = trackMap_arr.reshape((MAP_HEIGHT, MAP_WIDTH, INPUT_CHANNELS))
     #trackMap.save("mapman.png", "PNG")
+    print("finished extracting")
     return trackMap_arr;
 
 def create_model(keep_prob=0.6):
-
+    print("in new model\n")
     # CNN for MAP
     input_map = Input(shape=(MAP_HEIGHT, MAP_WIDTH, INPUT_CHANNELS_MAP))
     branch_previousFrame = BatchNormalization()(input_map)
