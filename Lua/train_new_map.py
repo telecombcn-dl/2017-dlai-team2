@@ -70,7 +70,7 @@ def extract_map(frame, mask):
     trackMap = ImageChops.multiply(frameext, mask) #ImageMath.eval("a*b", a=frameext, b = mask)
     #trackMap.save("mapman.png", "PNG")
     trackMap_arr = np.frombuffer(trackMap.tobytes(), dtype=np.uint8)
-    trackMap_arr = trackMap.reshape((MAP_HEIGHT, MAP_WIDTH, INPUT_CHANNELS))
+    trackMap_arr = trackMap_arr.reshape((MAP_HEIGHT, MAP_WIDTH, INPUT_CHANNELS))
     #trackMap.save("mapman.png", "PNG")
     return trackMap_arr;
 
@@ -108,8 +108,8 @@ def is_validation_set(string):
     return int.from_bytes(string_hash[:2], byteorder='big') / 2**16 > VALIDATION_SPLIT
 
 def load_training_data(track):
-    X_train, y_train = [], []
-    X_val, y_val = [], []
+    X_train, y_train, z_train = [], [], []
+    X_val, y_val, z_val = [], [], []
 
     if track == 'all':
         recordings = glob.iglob("recordings/*/*/*")

@@ -15,7 +15,7 @@ Lua/NES
 Lua/Genesis
 Lua/SNES
 Lua/UnitTests
-
+Lua/recordings
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
