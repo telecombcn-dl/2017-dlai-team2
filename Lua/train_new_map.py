@@ -8,8 +8,10 @@ from mkdir_p import mkdir_p
 from PIL import Image, ImageMath, ImageChops
 
 import numpy as np
+from keras.layers.merge import concatenate
+from keras.models import Model
 from keras.models import Sequential
-from keras.layers import Dense, Dropout, Flatten
+from keras.layers import Dense, Dropout, Flatten, Merge, Input
 from keras.layers import Conv2D
 from keras.layers.normalization import BatchNormalization
 from keras import optimizers
@@ -76,31 +78,49 @@ def extract_map(frame, mask):
     return trackMap_arr;
 
 def create_model(keep_prob=0.6):
-    model = Sequential()
 
-    # NVIDIA's model
-    model.add(BatchNormalization(input_shape=(INPUT_HEIGHT, INPUT_WIDTH, INPUT_CHANNELS)))
-    model.add(Conv2D(24, kernel_size=(5, 5), strides=(2, 2), activation='relu'))
-    model.add(BatchNormalization())
-    model.add(Conv2D(36, kernel_size=(5, 5), strides=(2, 2), activation='relu'))
-    model.add(BatchNormalization())
-    model.add(Conv2D(48, kernel_size=(5, 5), strides=(2, 2), activation='relu'))
-    model.add(BatchNormalization())
-    model.add(Conv2D(64, kernel_size=(3, 3), activation='relu'))
-    model.add(BatchNormalization())
-    model.add(Conv2D(64, kernel_size=(3, 3), activation='relu'))
-    model.add(Flatten())
-    # would concat stuff here
-    model.add(Dense(1164, activation='relu'))
+    # CNN for MAP
+    input_map = Input(shape=(MAP_HEIGHT, MAP_WIDTH, INPUT_CHANNELS_MAP))
+    branch_previousFrame = BatchNormalization()(input_map)
+    branch_previousFrame = Conv2D(24, kernel_size=(5, 5), strides=(2, 2), activation='relu')(branch_previousFrame)
+    branch_previousFrame = BatchNormalization()(branch_previousFrame)
+    branch_previousFrame = Conv2D(36, kernel_size=(5, 5), strides=(2, 2), activation='relu')(branch_previousFrame)
+    branch_previousFrame = BatchNormalization()(branch_previousFrame)
+    branch_previousFrame = Conv2D(48, kernel_size=(5, 5), strides=(2, 2), activation='relu')(branch_previousFrame)
+    branch_previousFrame = BatchNormalization()(branch_previousFrame)
+    branch_previousFrame = Conv2D(64, kernel_size=(3, 3), activation='relu')(branch_previousFrame)
+    branch_previousFrame = BatchNormalization()(branch_previousFrame)
+    branch_previousFrame = Conv2D(64, kernel_size=(3, 3), activation='relu')(branch_previousFrame)
+    branch_previousFrame = Flatten()(branch_previousFrame)
+    
+    # CNN for frame
+    input_Frame = Input(shape=(INPUT_HEIGHT, INPUT_WIDTH, INPUT_CHANNELS))
+    branch_currentFrame = BatchNormalization()(input_Frame)
+    branch_currentFrame = Conv2D(24, kernel_size=(5, 5), strides=(2, 2), activation='relu')(branch_currentFrame)
+    branch_currentFrame = BatchNormalization()(branch_currentFrame)
+    branch_currentFrame = Conv2D(36, kernel_size=(5, 5), strides=(2, 2), activation='relu')(branch_currentFrame)
+    branch_currentFrame = BatchNormalization()(branch_currentFrame)
+    branch_currentFrame = Conv2D(48, kernel_size=(5, 5), strides=(2, 2), activation='relu')(branch_currentFrame)
+    branch_currentFrame = BatchNormalization()(branch_currentFrame)
+    branch_currentFrame = Conv2D(64, kernel_size=(3, 3), activation='relu')(branch_currentFrame)
+    branch_currentFrame = BatchNormalization()(branch_currentFrame)
+    branch_currentFrame = Conv2D(64, kernel_size=(3, 3), activation='relu')(branch_currentFrame)
+    branch_currentFrame = Flatten()(branch_currentFrame)
+    
+    # Merge CNN outputs     
+    concatenated_branches = concatenate([branch_currentFrame, branch_previousFrame])
+    concatenated_branches = Dense(1164, activation='relu')(concatenated_branches)
     drop_out = 1 - keep_prob
-    model.add(Dropout(drop_out))
-    model.add(Dense(100, activation='relu'))
-    model.add(Dropout(drop_out))
-    model.add(Dense(50, activation='relu'))
-    model.add(Dropout(drop_out))
-    model.add(Dense(10, activation='relu'))
-    model.add(Dropout(drop_out))
-    model.add(Dense(OUT_SHAPE, activation='softsign', name="predictions"))
+    concatenated_branches = Dropout(drop_out)(concatenated_branches)
+    concatenated_branches = Dense(100, activation='relu')(concatenated_branches)
+    concatenated_branches = Dropout(drop_out)(concatenated_branches)
+    concatenated_branches = Dense( 50, activation='relu')(concatenated_branches)
+    concatenated_branches = Dropout(drop_out)(concatenated_branches)
+    concatenated_branches = Dense( 10, activation='relu')(concatenated_branches)
+    concatenated_branches = Dropout(drop_out)(concatenated_branches)
+    prediction = Dense(OUT_SHAPE, activation='softsign', name="predictions")(concatenated_branches)
+    
+    model = Model(inputs=[input_Frame, input_map], outputs=prediction)
 
     return model
 
@@ -197,12 +217,12 @@ if __name__ == '__main__':
 
     mkdir_p("weights")
     weights_file = "weights/{}.hdf5".format(args.track)
-    if os.path.isfile(weights_file):
-        model.load_weights(weights_file)
+    #if os.path.isfile(weights_file):
+    #    model.load_weights(weights_file)
 
     model.compile(loss=customized_loss, optimizer=optimizers.adam(lr=0.0001))
     checkpointer = ModelCheckpoint(
         monitor='val_loss', filepath=weights_file, verbose=1, save_best_only=True, mode='min')
     earlystopping = EarlyStopping(monitor='val_loss', patience=20)
-    model.fit(X_train, y_train, batch_size=batch_size, epochs=epochs,
-              shuffle=True, validation_data=(X_val, y_val), callbacks=[checkpointer, earlystopping])
+    model.fit([X_train, z_train], y_train, batch_size=batch_size, epochs=epochs,
+              shuffle=True, validation_data=([X_val, z_val], y_val), callbacks=[checkpointer, earlystopping])
