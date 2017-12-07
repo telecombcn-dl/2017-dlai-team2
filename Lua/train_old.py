@@ -10,7 +10,8 @@ from PIL import Image
 import numpy as np
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Flatten
-from keras.layers import Conv2D
+from keras.layers import Conv2D, TimeDistributed
+from keras.layers import LSTM, Reshape
 from keras.layers.normalization import BatchNormalization
 from keras import optimizers
 from keras import backend as K
@@ -53,17 +54,19 @@ def create_model(keep_prob=0.6):
     model = Sequential()
 
     # NVIDIA's model
-    model.add(BatchNormalization(input_shape=(INPUT_HEIGHT, INPUT_WIDTH, INPUT_CHANNELS)))
-    model.add(Conv2D(24, kernel_size=(5, 5), strides=(2, 2), activation='relu'))
-    model.add(BatchNormalization())
-    model.add(Conv2D(36, kernel_size=(5, 5), strides=(2, 2), activation='relu'))
-    model.add(BatchNormalization())
-    model.add(Conv2D(48, kernel_size=(5, 5), strides=(2, 2), activation='relu'))
-    model.add(BatchNormalization())
-    model.add(Conv2D(64, kernel_size=(3, 3), activation='relu'))
-    model.add(BatchNormalization())
-    model.add(Conv2D(64, kernel_size=(3, 3), activation='relu'))
-    model.add(Flatten())
+    #model.add(BatchNormalization(input_shape=(INPUT_HEIGHT, INPUT_WIDTH, INPUT_CHANNELS)))
+    model.add(TimeDistributed(Conv2D(24, kernel_size=(5, 5), strides=(2, 2), activation='relu'), batch_input_shape=(50, 1, INPUT_HEIGHT, INPUT_WIDTH, INPUT_CHANNELS)))
+    model.add(TimeDistributed(BatchNormalization()))
+    model.add(TimeDistributed(Conv2D(36, kernel_size=(5, 5), strides=(2, 2), activation='relu')))
+    model.add(TimeDistributed(BatchNormalization()))
+    model.add(TimeDistributed(Conv2D(48, kernel_size=(5, 5), strides=(2, 2), activation='relu')))
+    model.add(TimeDistributed(BatchNormalization()))
+    model.add(TimeDistributed(Conv2D(64, kernel_size=(3, 3), activation='relu')))
+    model.add(TimeDistributed(BatchNormalization()))
+    model.add(TimeDistributed(Conv2D(64, kernel_size=(3, 3), activation='relu')))
+    model.add(TimeDistributed(Flatten()))
+    #model.add(Reshape((5, 1*18*64)))
+    model.add(LSTM(64, activation='relu'))
     # would concat stuff here
     model.add(Dense(1164, activation='relu'))
     drop_out = 1 - keep_prob
@@ -108,7 +111,7 @@ def load_training_data(track):
 
             im = Image.open(file).resize((INPUT_WIDTH, INPUT_HEIGHT))
             im_arr = np.frombuffer(im.tobytes(), dtype=np.uint8)
-            im_arr = im_arr.reshape((INPUT_HEIGHT, INPUT_WIDTH, INPUT_CHANNELS))
+            im_arr = im_arr.reshape((1,INPUT_HEIGHT, INPUT_WIDTH, INPUT_CHANNELS))
 
             if valid:
                 X_train.append(im_arr)
@@ -120,7 +123,7 @@ def load_training_data(track):
             if USE_REVERSE_IMAGES:
                 im_reverse = im.transpose(Image.FLIP_LEFT_RIGHT)
                 im_reverse_arr = np.frombuffer(im_reverse.tobytes(), dtype=np.uint8)
-                im_reverse_arr = im_reverse_arr.reshape((INPUT_HEIGHT, INPUT_WIDTH, INPUT_CHANNELS))
+                im_reverse_arr = im_reverse_arr.reshape((1,INPUT_HEIGHT, INPUT_WIDTH, INPUT_CHANNELS))
 
                 if valid_reversed:
                     X_train.append(im_reverse_arr)
@@ -162,12 +165,12 @@ if __name__ == '__main__':
 
     mkdir_p("weights")
     weights_file = "weights/{}.hdf5".format(args.track)
-    if os.path.isfile(weights_file):
-        model.load_weights(weights_file)
+    #if os.path.isfile(weights_file):
+    #    model.load_weights(weights_file)
 
     model.compile(loss=customized_loss, optimizer=optimizers.adam(lr=0.0001))
     checkpointer = ModelCheckpoint(
         monitor='val_loss', filepath=weights_file, verbose=1, save_best_only=True, mode='min')
     earlystopping = EarlyStopping(monitor='val_loss', patience=20)
     model.fit(X_train, y_train, batch_size=batch_size, epochs=epochs,
-              shuffle=True, validation_data=(X_val, y_val), callbacks=[checkpointer, earlystopping])
+              shuffle=False, validation_data=(X_val, y_val), callbacks=[checkpointer, earlystopping])
