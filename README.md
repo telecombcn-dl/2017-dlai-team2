@@ -19,9 +19,23 @@ The following Python dependencies need to be installed.
 ## Getting started
 ### Directory structure
 
-/Lua contains all lua and python scripts needed
-
-/Lua/weights contains the weight files for the NN for different tracks we've trained it on
+- **/Lua contains** all lua and python scripts needed
+- **/Lua/lualibs** contains necessary helper methods for the main lua scripts
+- **/Lua/weights** contains the weight files for the NN for different tracks we've trained it on
 
 ### Files
+#### Lua scripts
+- **searchAIbeam_new.lua** is a script searching for the optimal path given the three best starting points of the previous iteration. Once a track has been completed, you've obtained the initial labeled dataset for a track.
+- **PalyAndSearch_new.lua** is used to let the NN play for 130 frames before the AI searches for the optimal path again, providing new frames for training. Before this script can be run, the predict server has to be up and running.
+- **Play.lua** is used to let the NN play all by itself, once again the prediction server needs to be up and running.
 
+#### Python scripts
+- **train.py** the original training script from [NeuralKart](https://github.com/rameshvarun/NeuralKart) which we'll use to compare our implementation against it.
+- **train_new_map.py** is our implementation of the NN which makes use of the minimap and past frames.
+- **predict_server.py** is the predict server, which is used to play in combination with the corresponding lua scripts.
+
+## The neural network
+<Image here>
+  
+## Performance
+<Performance here>
