@@ -34,6 +34,7 @@ OUT_SHAPE = 1
 INPUT_WIDTH = 200
 INPUT_HEIGHT = 66
 INPUT_CHANNELS = 3
+batch_size = 50
 
 VALIDATION_SPLIT = 0.1
 USE_REVERSE_IMAGES = False
@@ -54,8 +55,8 @@ def create_model(keep_prob=0.6):
     model = Sequential()
 
     # NVIDIA's model
-    #model.add(BatchNormalization(input_shape=(INPUT_HEIGHT, INPUT_WIDTH, INPUT_CHANNELS)))
-    model.add(TimeDistributed(Conv2D(24, kernel_size=(5, 5), strides=(2, 2), activation='relu'), batch_input_shape=(50, 1, INPUT_HEIGHT, INPUT_WIDTH, INPUT_CHANNELS)))
+    model.add(BatchNormalization(batch_input_shape=(batch_size, 5, INPUT_HEIGHT, INPUT_WIDTH, INPUT_CHANNELS)))
+    model.add(TimeDistributed(Conv2D(24, kernel_size=(5, 5), strides=(2, 2), activation='relu'))) 
     model.add(TimeDistributed(BatchNormalization()))
     model.add(TimeDistributed(Conv2D(36, kernel_size=(5, 5), strides=(2, 2), activation='relu')))
     model.add(TimeDistributed(BatchNormalization()))
@@ -92,7 +93,7 @@ def load_training_data(track):
     if track == 'all':
         recordings = glob.iglob("recordings/*/*/*")
     else:
-        recordings = glob.iglob("recordings/{}/*/*".format(track))
+        recordings = glob.iglob("/home/epallas/workspace/2017-dlai-team2/Lua/recordings/LR/TT/*".format(track))
 
     for recording in recordings:
         filenames = list(glob.iglob('{}/*.png'.format(recording)))
@@ -132,6 +133,11 @@ def load_training_data(track):
                     X_val.append(im_reverse_arr)
                     y_val.append(-steer)
 
+    X_train = X_train[0:len(X_train)-len(X_train)%batch_size]
+    y_train = y_train[0:len(y_train)-len(y_train)%batch_size]
+    X_val = X_val[0:len(X_val)-len(X_val)%batch_size]
+    y_val = y_val[0:len(y_val)-len(y_val)%batch_size]
+
     assert len(X_train) == len(y_train)
     assert len(X_val) == len(y_val)
 
@@ -167,6 +173,9 @@ if __name__ == '__main__':
     weights_file = "weights/{}.hdf5".format(args.track)
     #if os.path.isfile(weights_file):
     #    model.load_weights(weights_file)
+
+    np.reshape(X_train, (1500, 5, INPUT_HEIGHT, INPUT_WIDTH, INPUT_CHANNELS))
+    np.reshape(y_train, (1500, 5, INPUT_HEIGHT, INPUT_WIDTH, INPUT_CHANNELS))
 
     model.compile(loss=customized_loss, optimizer=optimizers.adam(lr=0.0001))
     checkpointer = ModelCheckpoint(

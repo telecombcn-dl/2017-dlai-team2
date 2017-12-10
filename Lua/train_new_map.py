@@ -97,18 +97,18 @@ def create_model(keep_prob=0.6):
     
     # CNN for frame
     input_Frame  = Input(shape=(INPUT_HEIGHT, INPUT_WIDTH, INPUT_CHANNELS))
-    branch_frame = TimeDistributed(BatchNormalization())(input_Frame)
-    branch_frame = TimeDistributed(Conv2D(24, kernel_size=(5, 5), strides=(2, 2), activation='relu'))(branch_frame)
-    branch_frame = TimeDistributed(BatchNormalization())(branch_frame)
-    branch_frame = TimeDistributed(Conv2D(36, kernel_size=(5, 5), strides=(2, 2), activation='relu'))(branch_frame)
-    branch_frame = TimeDistributed(BatchNormalization())(branch_frame)
-    branch_frame = TimeDistributed(Conv2D(48, kernel_size=(5, 5), strides=(2, 2), activation='relu'))(branch_frame)
-    branch_frame = TimeDistributed(BatchNormalization())(branch_frame)
-    branch_frame = TimeDistributed(Conv2D(64, kernel_size=(3, 3), activation='relu'))(branch_frame)
-    branch_frame = TimeDistributed(BatchNormalization())(branch_frame)
-    branch_frame = TimeDistributed(Conv2D(64, kernel_size=(3, 3), activation='relu'))(branch_frame)
-    branch_frame = TimeDistributed(Flatten())(branch_frame)
-    branch_frame = LSTM(64, activation='relu')(branch_frame)
+    branch_frame = (BatchNormalization())(input_Frame)
+    branch_frame = (Conv2D(24, kernel_size=(5, 5), strides=(2, 2), activation='relu'))(branch_frame)
+    branch_frame = (BatchNormalization())(branch_frame)
+    branch_frame = (Conv2D(36, kernel_size=(5, 5), strides=(2, 2), activation='relu'))(branch_frame)
+    branch_frame = (BatchNormalization())(branch_frame)
+    branch_frame = (Conv2D(48, kernel_size=(5, 5), strides=(2, 2), activation='relu'))(branch_frame)
+    branch_frame = (BatchNormalization())(branch_frame)
+    branch_frame = (Conv2D(64, kernel_size=(3, 3), activation='relu'))(branch_frame)
+    branch_frame = (BatchNormalization())(branch_frame)
+    branch_frame = (Conv2D(64, kernel_size=(3, 3), activation='relu'))(branch_frame)
+    branch_frame = (Flatten())(branch_frame)
+    #branch_frame = LSTM(64, activation='relu')(branch_frame)
     
     # Merge CNN outputs     
     concatenated_branches = concatenate([branch_frame, branch_map])
@@ -138,9 +138,9 @@ def load_training_data(track):
     if track == 'all':
         recordings = glob.iglob("recordings/*/*/*")
     else:
-        recordings = glob.iglob("recordings/{}/*/*".format(track))
+        recordings = glob.iglob("/home/epallas/workspace/2017-dlai-team2/Lua/recordings/LR/TT/*".format(track))
 
-    map_raw = Image.open("masks/mm_LR.png").convert("RGB") #Change LR to arg
+    map_raw = Image.open("/home/epallas/workspace/2017-dlai-team2/Lua/masks/mm_LR.png").convert("RGB") #Change LR to arg
 
     for recording in recordings:
         filenames = list(glob.iglob('{}/*.png'.format(recording)))
