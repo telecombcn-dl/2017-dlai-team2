@@ -19,7 +19,7 @@ The following Python dependencies need to be installed.
 ## Getting started
 ### Directory structure
 
-- **/Lua contains** all lua and python scripts needed
+- **/Lua** contains all lua and python scripts needed
 - **/Lua/lualibs** contains necessary helper methods for the main lua scripts
 - **/Lua/weights** contains the weight files for the NN for different tracks we've trained it on
 
@@ -35,7 +35,7 @@ The following Python dependencies need to be installed.
 - **predict_server.py** is the predict server, which is used to play in combination with the corresponding lua scripts.
 
 ## The neural network
-<Image here>
+Image here
   
 ## Performance
-<Performance here>
+Performance here
