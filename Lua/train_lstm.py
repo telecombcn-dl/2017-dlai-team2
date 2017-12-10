@@ -55,7 +55,7 @@ def create_model(keep_prob=0.6):
     model = Sequential()
 
     # NVIDIA's model
-    model.add(BatchNormalization(batch_input_shape=(batch_size, 1, INPUT_HEIGHT, INPUT_WIDTH, INPUT_CHANNELS)))
+    model.add(BatchNormalization(batch_input_shape=(batch_size, 5, INPUT_HEIGHT, INPUT_WIDTH, INPUT_CHANNELS)))
     model.add(TimeDistributed(Conv2D(24, kernel_size=(5, 5), strides=(2, 2), activation='relu'))) 
     model.add(TimeDistributed(BatchNormalization()))
     model.add(TimeDistributed(Conv2D(36, kernel_size=(5, 5), strides=(2, 2), activation='relu')))
@@ -135,8 +135,8 @@ def load_training_data(track):
 
     X_train = X_train[0:len(X_train)-len(X_train)%batch_size]
     y_train = y_train[0:len(y_train)-len(y_train)%batch_size]
-    X_val = X_val[0:len(X_val)-len(X_val)%batch_size]
-    y_val = y_val[0:len(y_val)-len(y_val)%batch_size]
+    X_val = X_val[0:len(X_val)-len(X_val)%batch_size-100]
+    y_val = y_val[0:len(y_val)-len(y_val)%batch_size-100]
 
     assert len(X_train) == len(y_train)
     assert len(X_val) == len(y_val)
@@ -160,7 +160,7 @@ if __name__ == '__main__':
     # Load Training Data
     X_train, y_train, X_val, y_val = load_training_data(args.track)
 
-    print(X_train.shape[0], 'training samples.')
+    print(X_train.shape, 'training samples.')
     print(X_val.shape[0], 'validation samples.')
 
     # Training loop variables
@@ -179,5 +179,15 @@ if __name__ == '__main__':
     checkpointer = ModelCheckpoint(
         monitor='val_loss', filepath=weights_file, verbose=1, save_best_only=True, mode='min')
     earlystopping = EarlyStopping(monitor='val_loss', patience=20)
+    
+    al= X_train.reshape(1500, 5, INPUT_HEIGHT, INPUT_WIDTH, INPUT_CHANNELS)
+    print(X_train[0].size)
+   print(al[0,0,:,:,:])
+   
+    X_train = X_train.reshape(1500, 5, INPUT_HEIGHT, INPUT_WIDTH, INPUT_CHANNELS)
+    y_train = y_train.reshape(1500, 5)
+    X_val = X_val.reshape(150, 5, INPUT_HEIGHT, INPUT_WIDTH, INPUT_CHANNELS)
+    y_val = y_val.reshape(150, 5)
+    
     model.fit(X_train, y_train, batch_size=batch_size, epochs=epochs,
               shuffle=False, validation_data=(X_val, y_val), callbacks=[checkpointer, earlystopping])
