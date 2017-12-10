@@ -1,6 +1,10 @@
 # 2017-dlai-team2
 DLAI 2017 Team 2
 
+## Additional Documents
+- [Class Presentation](https://drive.google.com/open?id=1ayph252_IFX2iUHIm7Wuh_oZbTWSrhuJaHRFbZw80rU)
+- [Jupyter Notebook](https://github.com/telecombcn-dl/2017-dlai-team2/blob/master/Lua/TrainJupyterNB.ipynb) is located in the Lua folder in the repository
+
 ## Introduction
 
 This project is based on [NeuralKart](https://github.com/rameshvarun/NeuralKart), which has been extended to use the minimap as input into a separate convolutional neural network as well as the introcution of LSTM layers to make current predictions based not only on the current input, but also on the past. 
