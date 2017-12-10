@@ -11,8 +11,9 @@ import numpy as np
 from keras.layers.merge import concatenate
 from keras.models import Model
 from keras.models import Sequential
-from keras.layers import Dense, Dropout, Flatten, Merge, Input
-from keras.layers import Conv2D
+from keras.layers import Dense, Dropout, Flatten, Merge, Input, Reshape
+from keras.layers import Conv2D, TimeDistributed
+from keras.layers import LSTM
 from keras.layers.normalization import BatchNormalization
 from keras import optimizers
 from keras import backend as K
@@ -75,41 +76,42 @@ def extract_map(frame, mask):
     trackMap_arr = np.frombuffer(trackMap.tobytes(), dtype=np.uint8)
     trackMap_arr = trackMap_arr.reshape((MAP_HEIGHT, MAP_WIDTH, INPUT_CHANNELS))
     #trackMap.save("mapman.png", "PNG")
-    print("finished extracting")
+    #print("finished extracting")
     return trackMap_arr;
 
 def create_model(keep_prob=0.6):
     print("in new model\n")
     # CNN for MAP
-    input_map = Input(shape=(MAP_HEIGHT, MAP_WIDTH, INPUT_CHANNELS_MAP))
-    branch_previousFrame = BatchNormalization()(input_map)
-    branch_previousFrame = Conv2D(24, kernel_size=(5, 5), strides=(2, 2), activation='relu')(branch_previousFrame)
-    branch_previousFrame = BatchNormalization()(branch_previousFrame)
-    branch_previousFrame = Conv2D(36, kernel_size=(5, 5), strides=(2, 2), activation='relu')(branch_previousFrame)
-    branch_previousFrame = BatchNormalization()(branch_previousFrame)
-    branch_previousFrame = Conv2D(48, kernel_size=(5, 5), strides=(2, 2), activation='relu')(branch_previousFrame)
-    branch_previousFrame = BatchNormalization()(branch_previousFrame)
-    branch_previousFrame = Conv2D(64, kernel_size=(3, 3), activation='relu')(branch_previousFrame)
-    branch_previousFrame = BatchNormalization()(branch_previousFrame)
-    branch_previousFrame = Conv2D(64, kernel_size=(3, 3), activation='relu')(branch_previousFrame)
-    branch_previousFrame = Flatten()(branch_previousFrame)
+    input_map  = Input(shape=(MAP_HEIGHT, MAP_WIDTH, INPUT_CHANNELS_MAP))
+    branch_map = BatchNormalization()(input_map)
+    branch_map = Conv2D(24, kernel_size=(5, 5), strides=(2, 2), activation='relu')(branch_map)
+    branch_map = BatchNormalization()(branch_map)
+    branch_map = Conv2D(36, kernel_size=(5, 5), strides=(2, 2), activation='relu')(branch_map)
+    branch_map = BatchNormalization()(branch_map)
+    branch_map = Conv2D(48, kernel_size=(5, 5), strides=(2, 2), activation='relu')(branch_map)
+    branch_map = BatchNormalization()(branch_map)
+    branch_map = Conv2D(64, kernel_size=(3, 3), activation='relu')(branch_map)
+    branch_map = BatchNormalization()(branch_map)
+    branch_map = Conv2D(64, kernel_size=(3, 3), activation='relu')(branch_map)
+    branch_map = Flatten()(branch_map)
     
     # CNN for frame
-    input_Frame = Input(shape=(INPUT_HEIGHT, INPUT_WIDTH, INPUT_CHANNELS))
-    branch_currentFrame = BatchNormalization()(input_Frame)
-    branch_currentFrame = Conv2D(24, kernel_size=(5, 5), strides=(2, 2), activation='relu')(branch_currentFrame)
-    branch_currentFrame = BatchNormalization()(branch_currentFrame)
-    branch_currentFrame = Conv2D(36, kernel_size=(5, 5), strides=(2, 2), activation='relu')(branch_currentFrame)
-    branch_currentFrame = BatchNormalization()(branch_currentFrame)
-    branch_currentFrame = Conv2D(48, kernel_size=(5, 5), strides=(2, 2), activation='relu')(branch_currentFrame)
-    branch_currentFrame = BatchNormalization()(branch_currentFrame)
-    branch_currentFrame = Conv2D(64, kernel_size=(3, 3), activation='relu')(branch_currentFrame)
-    branch_currentFrame = BatchNormalization()(branch_currentFrame)
-    branch_currentFrame = Conv2D(64, kernel_size=(3, 3), activation='relu')(branch_currentFrame)
-    branch_currentFrame = Flatten()(branch_currentFrame)
+    input_Frame  = Input(shape=(INPUT_HEIGHT, INPUT_WIDTH, INPUT_CHANNELS))
+    branch_frame = TimeDistributed(BatchNormalization())(input_Frame)
+    branch_frame = TimeDistributed(Conv2D(24, kernel_size=(5, 5), strides=(2, 2), activation='relu'))(branch_frame)
+    branch_frame = TimeDistributed(BatchNormalization())(branch_frame)
+    branch_frame = TimeDistributed(Conv2D(36, kernel_size=(5, 5), strides=(2, 2), activation='relu'))(branch_frame)
+    branch_frame = TimeDistributed(BatchNormalization())(branch_frame)
+    branch_frame = TimeDistributed(Conv2D(48, kernel_size=(5, 5), strides=(2, 2), activation='relu'))(branch_frame)
+    branch_frame = TimeDistributed(BatchNormalization())(branch_frame)
+    branch_frame = TimeDistributed(Conv2D(64, kernel_size=(3, 3), activation='relu'))(branch_frame)
+    branch_frame = TimeDistributed(BatchNormalization())(branch_frame)
+    branch_frame = TimeDistributed(Conv2D(64, kernel_size=(3, 3), activation='relu'))(branch_frame)
+    branch_frame = TimeDistributed(Flatten())(branch_frame)
+    branch_frame = LSTM(64, activation='relu')(branch_frame)
     
     # Merge CNN outputs     
-    concatenated_branches = concatenate([branch_currentFrame, branch_previousFrame])
+    concatenated_branches = concatenate([branch_frame, branch_map])
     concatenated_branches = Dense(1164, activation='relu')(concatenated_branches)
     drop_out = 1 - keep_prob
     concatenated_branches = Dropout(drop_out)(concatenated_branches)
