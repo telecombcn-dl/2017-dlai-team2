@@ -38,10 +38,22 @@ The following Python dependencies need to be installed.
 - **train_new_map.py** is our implementation of the NN which makes use of the minimap and past frames.
 - **predict_server.py** is the predict server, which is used to play in combination with the corresponding lua scripts.
 
-## The neural network
-Image here
+## The neural networks
+
+Overall we have tested/built 4 different structures, which a breively shown in the following.
+
+### Original NN
+
+### Frame and Map based NN (two towers)
+
+### Consecutive NN (two consecutive frames are input to the two tower architecture)
+
+### Original NN with LSTM layer after the convolutional layers
   
 ## Performance
+
+For the performance evaluation all 4 implementations were trained on the same dataset, which is composed of a mixture of the play and search AI playing with all 4 implementations. The average and best times have been obtained from 5 consecutive runs on the same track.
+
 |Implementation|Best lap|Best time|Avg. Lap|Avg. Time|
 |--------------|--------|---------|--------|---------|
 |Original      |41''51  | 2'10''27| 42''30 | 2'12''28|
