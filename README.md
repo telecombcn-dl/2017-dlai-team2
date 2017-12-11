@@ -42,4 +42,9 @@ The following Python dependencies need to be installed.
 Image here
   
 ## Performance
-Performance here
+|Implementation|Best lap|Best time|Avg. Lap|Avg. Time|
+|--------------|--------|---------|--------|---------|
+|Original      |41''51  | 2'10''27| 42''30 | 2'12''28|
+|Consecutive   |41''57  | 2'08''98| 42''14 | 2'12''31|
+|With Map      |40''56  | 2'05''77| 41''05 | 2'08''68|
+|Orig. + LSTM  | DNF    | DNF     | DNF    | DNF     |
