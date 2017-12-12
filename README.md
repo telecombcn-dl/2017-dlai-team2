@@ -38,7 +38,7 @@ The following Python dependencies need to be installed.
 - **train_original_NN.py** is the original NeuralKart implementation.
 - **train_with_map.py** is our two tower architecture which also considers the minimap
 - **train_consecutive.py** is our two tower architecture that considers two consecutive frames
-- **train_lstm.py** is the original NN which has an LSTM layer inserted below the Conv layers
+- **train_original_with_lstm.py** is the original NN which has an LSTM layer inserted below the Conv layers
 - **predict_server-\*.py** are the predict servers for the corresponding implementations, which is used to play in combination with the corresponding lua scripts.
 
 # The neural networks
